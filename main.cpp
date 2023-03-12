@@ -24,7 +24,6 @@ vector<int> getMinterms(string input,set<char> variables)
 {
     string minterm = "";
     vector<int> minterms;
-    int bitValue;
     for (int i = 0; i < input.length(); i++)
     {
         while (i<input.length() && input[i] != '+' && input[i] != ' ')
@@ -40,15 +39,10 @@ vector<int> getMinterms(string input,set<char> variables)
         minterms.push_back(0);
         for (int j = 0; j < minterm.length(); j++)
         {
-            if (j+1<minterm.length() && minterm[j+1] == 39)
+            if (j+1<minterm.length() && minterm[j+1] != 39)
             {
-                bitValue = 0;
+                minterms[minterms.size()-1] += pow(2,variables.size()-j-1);
             }
-            else if (j+1<minterm.length() && minterm[j+1] != 39)
-            {
-                bitValue = 1;
-            }
-            minterms[minterms.size()-1] += bitValue*pow(2,variables.size()-j-1);
         }
         minterm = "";
     }
