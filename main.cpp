@@ -91,6 +91,19 @@ set<int> getMinterms(string input,set<char> variables)
     return minterms;
 }
 
+set<int> getMaxterms(set<int> minterms, set<char> variables)
+{
+    set<int> maxterms;
+
+    for (int i = 0; i < pow(2, variables.size()); i++)
+    {
+        if(minterms.find(i) == minterms.end())
+            maxterms.insert(i);
+    }
+    
+    return maxterms;
+}
+
 set<char> getVariables(string input, set<char> validChars)
 {
     set<char> variables;
@@ -142,13 +155,24 @@ vector<int> getOutput(set<int> minterms, set<char> variables)
 
 void printTruthTable(vector<vector<int> > truthTableCombs, vector<int> output, set<char> variables)
 {
+    set<char>::iterator iter;
+    for(iter = variables.begin();iter!=variables.end();iter++)
+    {
+        cout<<*iter<<"\t";
+    }
+    cout<<"|\tF"<<endl;
+    for (int i = 0; i < 8*variables.size()+16; i++)
+    {
+        cout<<"-";
+    }
+    cout<<endl;
     for (int i = 0; i < pow(2,variables.size()); i++)
     {
         for (int j = 0; j < variables.size(); j++)
         {
-            cout<<truthTableCombs[i][j]<<" ";            
+            cout<<truthTableCombs[i][j]<<"\t";            
         }
-        cout<<output[i]<<endl;
+        cout<<"|\t"<<output[i]<<endl;
     }    
 }
 
@@ -176,10 +200,10 @@ void printCanonicalSOP(set<int> minterms, set<char> variables, vector<vector<int
     cout<<endl;
 }
 
-void printCanonicalPOS(set<int> minterms, set<char> variables, vector<vector<int> > truthTableCombs)
+void printCanonicalPOS(set<int> maxterms, set<char> variables, vector<vector<int> > truthTableCombs)
 {
     set<int>::iterator i;
-    for (i = minterms.begin(); i!= minterms.end(); i++)
+    for (i = maxterms.begin(); i!= maxterms.end(); i++)
     {
         cout<<"(";
         set<char>::iterator iterVar = variables.begin();
@@ -207,19 +231,23 @@ int main()
     validChars.insert(39);
     validChars.insert(' ');
     validChars.insert('+');
-    string input = "a + abc";
+    string input = "a'a + b";
 
     if (isValid(input, validChars))
     {
-        cout << "valid" << endl;
         set<char> variables = getVariables(input, validChars);
         set<int> minterms = getMinterms(input, variables);
+        set<int> maxterms = getMaxterms(minterms, variables);
         vector<vector<int> > truthTableCombs = getTruthTableCombs(variables);
         vector<int> output = getOutput(minterms, variables);
 
+        cout<<"\nTruth Table:\n"<<endl;
         printTruthTable(truthTableCombs, output, variables);
+        cout<<"\nCanonical SoP: ";
         printCanonicalSOP(minterms, variables, truthTableCombs);
-        printCanonicalPOS(minterms, variables, truthTableCombs);
+        cout<<"\nCanonical PoS: ";
+        printCanonicalPOS(maxterms, variables, truthTableCombs);
+        cout<<endl;
     }
     else
         cout << "invalid" << endl;
