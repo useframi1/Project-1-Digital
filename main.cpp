@@ -1,10 +1,10 @@
 #include <iostream>
 #include <vector>
 #include <set>
+#include <map>
 #include <cmath>
 using namespace std;
 
-set<char> validChars;
 
 bool isValid(string input, set<char> validChars)
 {
@@ -19,11 +19,50 @@ bool isValid(string input, set<char> validChars)
     return valid;
 }
 
-//still not finished
-vector<int> getMinterms(string input,set<char> variables)
+map<int, int> getMintermsMap(string minterm, set<char> variables, int &numOfBars)
+{
+    map<int, int> mintermsMap;
+    for (int j = 0; j < minterm.length(); j++)
+    {
+        int index = 0;
+        int x = 0;
+        for(char item:variables)
+        {
+            if(item == minterm[j]) break;
+            index++;
+        }
+        if(j+1<minterm.length() && minterm[j+1] == 39)
+        {
+            numOfBars++;
+            x = pow(2,variables.size()-index-1);
+        }
+        
+        for (int k = 0; k < pow(2,variables.size()); k++)
+        {
+            if (x != pow(2,variables.size()-index-1))
+            {
+                x++;
+            }
+            else 
+            {
+                mintermsMap.insert(pair<int,int>(k,0));
+                for (int p = 0; p < x; p++)
+                {
+                    mintermsMap[k]++;
+                    k++;
+                }
+                k--;
+                x = 0;
+            }
+        }
+    }
+    return mintermsMap;
+}
+
+set<int> getMinterms(string input,set<char> variables)
 {
     string minterm = "";
-    vector<int> minterms;
+    set<int> minterms;
     for (int i = 0; i < input.length(); i++)
     {
         while (i<input.length() && input[i] != '+' && input[i] != ' ')
@@ -35,22 +74,21 @@ vector<int> getMinterms(string input,set<char> variables)
         {
             i++;
         }
-        
-        minterms.push_back(0);
-        for (int j = 0; j < minterm.length(); j++)
+        i--;
+        int numOfBars = 0;
+        map<int, int> mintermsMap = getMintermsMap(minterm, variables, numOfBars);
+        for (pair<int, int> item:mintermsMap)
         {
-            if (j+1<minterm.length() && minterm[j+1] != 39)
-            {
-                minterms[minterms.size()-1] += pow(2,variables.size()-j-1);
-            }
+            if(item.second == minterm.length()-numOfBars)
+                minterms.insert(item.first);
         }
         minterm = "";
     }
- 
+
     return minterms;
 }
 
-set<char> getVariables(string input)
+set<char> getVariables(string input, set<char> validChars)
 {
     set<char> variables;
     for (int i = 0; i < input.length(); i++)
@@ -64,7 +102,7 @@ set<char> getVariables(string input)
     return variables;
 }
 
-void printTruthTable(vector<int> minterms, set<char> variables)
+void printTruthTable(set<int> minterms, set<char> variables)
 {
     int truthValue = 0;
     vector<vector<int> > truthTableCombs(pow(2,variables.size()),vector<int>(variables.size()));
@@ -85,9 +123,10 @@ void printTruthTable(vector<int> minterms, set<char> variables)
     }
 
     vector<int> output(pow(2,variables.size()));
-    for (int i = 0; i < minterms.size(); i++)
+    set<int>::iterator iter;
+    for (iter = minterms.begin();iter!=minterms.end();iter++)
     {
-        output[minterms[i]] = 1;
+        output[*iter] = 1;
     }
     
 
@@ -98,39 +137,28 @@ void printTruthTable(vector<int> minterms, set<char> variables)
             cout<<truthTableCombs[i][j]<<" ";            
         }
         cout<<output[i]<<endl;
-    }
-
-    
+    }    
 }
 
 int main()
 {
+    set<char> validChars;
+
     validChars.insert(39);
     validChars.insert(' ');
     validChars.insert('+');
     validChars.insert('&');
     validChars.insert('!');
-    string input = "abc'";
+    string input = "ac + ac'b'";
 
     if (isValid(input, validChars))
     {
         cout << "valid" << endl;
+        set<char> variables = getVariables(input, validChars);
+        set<int> minterms = getMinterms(input, variables);
+        printTruthTable(minterms, variables);
     }
     else
         cout << "invalid" << endl;
 
-    set<char> variables = getVariables(input);
-    vector<int> minterms = getMinterms(input, variables);
-    printTruthTable(minterms, variables);
-
-    for (int i = 0; i < minterms.size(); i++)
-    {
-        cout << minterms[i] << endl;
-    }
-
-    set<char>::iterator iter;
-    for (iter = variables.begin(); iter != variables.end(); iter++)
-    {
-        cout << *iter << endl;
-    }
 }
