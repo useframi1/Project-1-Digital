@@ -26,9 +26,10 @@ map<int, int> getMintermsMap(string minterm, set<char> variables, int &numOfBars
     {
         int index = 0;
         int x = 0;
-        for(char item:variables)
+        set<char>::iterator iter;
+        for(iter = variables.begin(); iter!=variables.end(); iter++)
         {
-            if(item == minterm[j]) break;
+            if(*iter == minterm[j]) break;
             index++;
         }
         if(j+1<minterm.length() && minterm[j+1] == 39)
@@ -77,10 +78,12 @@ set<int> getMinterms(string input,set<char> variables)
         i--;
         int numOfBars = 0;
         map<int, int> mintermsMap = getMintermsMap(minterm, variables, numOfBars);
-        for (pair<int, int> item:mintermsMap)
+
+        map<int, int>::iterator iter;
+        for (iter = mintermsMap.begin(); iter!=mintermsMap.end(); iter++)
         {
-            if(item.second == minterm.length()-numOfBars)
-                minterms.insert(item.first);
+            if((*iter).second == minterm.length()-numOfBars)
+                minterms.insert((*iter).first);
         }
         minterm = "";
     }
@@ -102,7 +105,7 @@ set<char> getVariables(string input, set<char> validChars)
     return variables;
 }
 
-void printTruthTable(set<int> minterms, set<char> variables)
+vector<vector<int> > getTruthTableCombs(set<char> variables)
 {
     int truthValue = 0;
     vector<vector<int> > truthTableCombs(pow(2,variables.size()),vector<int>(variables.size()));
@@ -122,14 +125,23 @@ void printTruthTable(set<int> minterms, set<char> variables)
         }
     }
 
+    return truthTableCombs;
+}
+
+vector<int> getOutput(set<int> minterms, set<char> variables)
+{
     vector<int> output(pow(2,variables.size()));
     set<int>::iterator iter;
     for (iter = minterms.begin();iter!=minterms.end();iter++)
     {
         output[*iter] = 1;
     }
-    
 
+    return output;
+}
+
+void printTruthTable(vector<vector<int> > truthTableCombs, vector<int> output, set<char> variables)
+{
     for (int i = 0; i < pow(2,variables.size()); i++)
     {
         for (int j = 0; j < variables.size(); j++)
@@ -140,6 +152,54 @@ void printTruthTable(set<int> minterms, set<char> variables)
     }    
 }
 
+void printCanonicalSOP(set<int> minterms, set<char> variables, vector<vector<int> > truthTableCombs)
+{
+    set<int>::iterator i;
+    int temp = 0;
+    for (i = minterms.begin(); i!= minterms.end(); i++)
+    {
+        set<char>::iterator iterVar = variables.begin();
+        for (int j = 0; j < truthTableCombs[*i].size(); j++)
+        {
+            char var = *iterVar;
+            iterVar++;
+
+            if (truthTableCombs[*i][j] == 1)
+                cout<<var;
+            else 
+                cout<<var<<"'";
+        }
+        if(temp<minterms.size()-1)
+            cout<<" + ";
+        temp++;
+    }
+    cout<<endl;
+}
+
+void printCanonicalPOS(set<int> minterms, set<char> variables, vector<vector<int> > truthTableCombs)
+{
+    set<int>::iterator i;
+    for (i = minterms.begin(); i!= minterms.end(); i++)
+    {
+        cout<<"(";
+        set<char>::iterator iterVar = variables.begin();
+        for (int j = 0; j < truthTableCombs[*i].size(); j++)
+        {
+            char var = *iterVar;
+            iterVar++;
+
+            if (truthTableCombs[*i][j] == 1)
+                cout<<var<<"'";
+            else 
+                cout<<var;
+            if(j<truthTableCombs[*i].size()-1)
+                cout<<" + ";
+        }
+        cout<<")";
+    }
+    cout<<endl;
+}
+
 int main()
 {
     set<char> validChars;
@@ -147,16 +207,19 @@ int main()
     validChars.insert(39);
     validChars.insert(' ');
     validChars.insert('+');
-    validChars.insert('&');
-    validChars.insert('!');
-    string input = "ac + ac'b'";
+    string input = "a + abc";
 
     if (isValid(input, validChars))
     {
         cout << "valid" << endl;
         set<char> variables = getVariables(input, validChars);
         set<int> minterms = getMinterms(input, variables);
-        printTruthTable(minterms, variables);
+        vector<vector<int> > truthTableCombs = getTruthTableCombs(variables);
+        vector<int> output = getOutput(minterms, variables);
+
+        printTruthTable(truthTableCombs, output, variables);
+        printCanonicalSOP(minterms, variables, truthTableCombs);
+        printCanonicalPOS(minterms, variables, truthTableCombs);
     }
     else
         cout << "invalid" << endl;
